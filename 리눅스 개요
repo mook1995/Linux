@@ -1,0 +1,338 @@
+1.리눅스 종류 : https://upload.wikimedia.org/wikipedia/commons/8/83/Linux_Distribution_Timeline_27_02_21.svg
+
+
+
+
+
+    1.Redhat : 업데이트가 느리지만 안정성이 좋다. 커널이 업데이트 되면 이를 끊임 없이 테스트 한 후에 레드햇을 업데이트 하기 때문이다.
+                이러한 서비스를 바탕으로 리눅스를 패키지를 배포하기 때문에 유료로 제공된다.
+
+    2.CentOS : 무료로 제공된다. 레드햇 베이스로 센트OS가 만들어지지만...
+              요즘에는 레드햇에서 센트os를 기반으로 테스트베드로 쓰고 업데이트를 하겠다며 CENTos를 위협하고 있다함
+
+    3.우분투 :
+
+
+2.Virtual Box
+          환경설정 - 확장을 설치해줘야 마우스 커서를 쓸 수 있다.
+          기본머신폴더 : D:로 변경해줘야 C에 계속 생성되는걸 방지 (VirtualBox_Machines)
+
+          확장설치 : https://www.virtualbox.org/wiki/Downloads
+          -VirtualBox 6.1.26 Oracle VM VirtualBox Extension Pack 다운후 설치 - 확장추가됨
+
+          우분투 다운로드:  Ubuntu 20.04.3 LTS : 안정화버전 Long Term Support (오랫동안 지원한하다는것임)
+          - https://ubuntu.com/download/desktop/thank-you?version=20.04.3&architecture=amd64
+
+
+          버츄얼박스 이미지 이동
+          https://technote.kr/178
+
+
+3.우분투 설치하기
+  종류 Linux
+  버전: Ubuntu(64-bit)
+  램: 최대로 해도 호스트 램의 절반정도 크기로 주는게 좋다
+  파일 위치 및 크기 : 하둡을 사용할것이므로 50GB이상 주는게 좋다.
+  # # # 언어 선택시 영어로 해야 설치시 화면이 짤리지 않는다.
+  Username : sudo 권한을 사용할 계정을 추가하는 것임
+              id: userlim
+              pw: 1234
+
+
+4.우분투 세팅하기
+  -해상도를 조정하기 위해...
+    게스트확장이미지를 설치하면서 컴파일이 되어야 하는데 초기 설치상태에는 아무런 컴파일러가 없다.
+    기본적으로 우분투는 APT라는 패키지 매니저가 있다.
+    터미널에서 APT패키지 매니저로 (루트권한을 써야하므로 sudo로 접근한다. )
+
+    $ sudo apt update : apt에서 관리하는 패키지들을 모두 업데이트 함(패키지 목록 갱신)
+
+    $ sudo apt upgrade: 방금 업데이트한 목록으로 현재 설치되어있는 어플리케이션들을 모두 업그레이드 해준다.
+
+          ~~이러한 작업을 한 두달에 한번 씩 해주면 좋다.
+
+    세가지를 설치할 것인데
+     $ sudo apt install gcc   :GNU C compiler를 설치한다.
+
+     $ sudo apt install g++    : GNU C++ compiler를 설치한다.
+
+     $ sudo apt install make    : 이건 나중에 설명해주겠음
+
+
+    이후 Virtual box 패널에서 게스트확장이미지를 뻇다가 다시 삽입해보자
+    다시 Ubuntu로 돌아와서 run 하면 된다. 설치후 리부팅 하는데 power off 이후
+    게스트확장이미지를 다시한번 뺴준다.  이후 power on해준다.
+
+  -한글 입력을 위해...
+    영어판으로 설치되어있기 떄문에 언어입력기를 업데이트하고 한글 폰트를 설치한다.
+
+
+5.리눅스 디렉토리 구조
+   리눅스 디렉토리를 쓸때는 상대경로 절대경로를 자유롭게 쓸수 있어야 한다.
+   bin : 시스템의 주요 명령이 들어있는 디렉토리
+
+   . : 현재위치
+   .. : 부모의 위치
+
+
+6.리눅스 기본 명령어
+    ls -p : 디렉토리를 / 를 붙여서 출력한다.
+
+
+7.리눅스 권한
+      drwxrwxrwx  : d-directory를 의미, 첫3- owner , 두3 -group, 삼3-그외 다른사람들의 권한
+
+      rwxr-wr-- : 을 이진수로 하면 111 101 100인데 각각 숫자로 754가된다.
+            chmod 754 test.xml
+
+
+8.Opnessh 설치하기
+    $ sudo apt install openssh-server   : 설치하기
+    $ sudo systemctl status ssh   :  설치상태 확인
+
+    $ cd /etc/ssh
+    $ sudo vi sshd_config
+
+    x 키로 주석 해제 하기
+      port 22
+      PubkeyAuthentication
+      PasswordAuthentication
+
+    $ sudo systemctl restart ssh
+    $ sudo systemctl status ssh
+    외부에서 ssh 서버에 접속하려면 먼저 방화벽을 해제시켜야 한다.
+
+    $ sudo ufw allow ssh    : ufw (ubuntu firewall) , 외부에서 ssh에 치고 들어올수 있도록 설정함
+
+    $ sudo apt install net-tools
+
+    ifconfig
+          inet 뒤에가 가상아이피로 버추얼박스 내부에서 쓰는 주소임
+          내부 아이피이므로 이걸로 접속이 불가능한데 포트포워딩을 해야한다.
+
+    버츄얼박스패널에서 포트포워딩 설정하기
+          호스트 IP  : 호스트의 IP
+          호스트 포트 : 호스트 컴퓨터의 포트 2200으로 들어오면
+          게스트 IP : 게스트로 들어간다.
+          게스트 포트 : ssh가 사용하는 포트
+
+          이렇게 설정하고 저장하면 로컬호스트에서 가상머신의ssh에 접속이 가능하다.
+
+
+    (윈도우 파워셀) $ ssh userlim@localhost -p 2200
+          이제 로컬호스트에서 가상머신에 구현한 환경에 접속이 가능하다. https://velog.io/@hyeseong-dev/%EB%A6%AC%EB%88%85%EC%8A%A4-ssh%EB%9E%80
+
+
+9.게스트OS와 호스트OS간의 공유폴더 만들기
+      일반적으로 리눅스나 유닉스에서 새로운 디스크를 붙이는것을 마운트라고 하는데
+      이 마운트를 할때는 cd /mnt 경로에 붙여준다.
+      $ cd /mnt : 여기에 윈도우 파일 등을 마운트 해줄것이다.
+
+      1. D:Linux_share 폴더 생성해줌
+      2. 버추얼박스 패널 - 가상머신_설정- 공유폴더 설정
+      3. 폴더경로 D:Linux_share
+      4. 마운트지점 : /mnt/share
+
+      설정을 했으면 가상머신을 리부트를 해줘야 적용이 된다.
+      sudo reboot
+
+      확인하기 위해 리부트 후 cd /mnt 경로에서
+      $ cd share 해보면 허가 거부가 나온다.
+      이건 소유자가 root고 그룹이 vboxsf인데 내 계정이 추가가 안되어있기 떄문이다. (윈도우에서 만든 파일을 마운트한것이므로...)
+      $ sudo usermod -G vboxsf -a userlim : vboxsf 그룹(-G)에 userlim계정을 appned함(-a)
+
+      $ sudo reboot
+
+
+10.VI 에디터 연습하기
+      연습할 디렉토리 생성
+             $ mkdir practice
+             $ cd mkdir
+
+      윈도우에서 공유폴더에 받은 파일 연습디렉토리로 옮기기
+             $ cd /mnt/share
+             $ mv test.xml ~/work
+             $ vi test.xml
+                      행마다 ^M 이란 문자가 붙어있는데 이건 윈도우 carriage return 으로
+                      이걸 다 지워줘야 한다.
+
+                      (가상머신환경에서..) $ :g/(crtl+vm)/s//g  입력후 enter
+
+             $ vi test.xml
+                  주피터와 마찬가지로 입력모드와 명령모드가 있다. esc는 명령모드로 간다.
+                  명령모드 선택
+                      입력방식
+                      i : insert : 커서 앞에 삽입하기
+                      a : append : 커서 뒤에 이어붙이기
+                      A : 커서가 있는 라인 뒤에 이어 붙이기
+                      o : over : 커서가 있는 라인 다음 라인에 입력
+                      O : over : 커서가 있는 라인 위의 라인에 입력할 떄
+                      x : 한글자 삭제
+                      dd : delete : 라인 삭제, 잘라내기
+                      dw : delete + word : 단어단위로 삭제
+                      4dd : 숫자만큼 라인 삭제, 잘라내기
+                      yy : yank : 라인 복사하기
+                      4yy : 숫자만큼 라인 복사
+                      p : paste : 붙여넣기
+
+                      5x : 숫자만큼의 글자 삭제
+                      u : undo : 방금 실행한 명령을 되돌린다.
+                      r : replace : 한글자만 바꾸므로 입력후 자동으로 명령모드로 빠져나온다.
+                      R : replace : 이스케이프 하기 전까지 계속 replace한다.
+
+                     커서이동
+                     $ : 맨뒤로 감
+                     ^ : 맨앞으로 감
+                     w : 단어 단위로 이동
+                     b : 단어 단위로 뒤로
+                     crtl+f : 한페이지 앞으로 이동
+                     crtl+b : 한페이지 뒤로 이동
+                     crtl+g  : 현재 위치에 대한 각종 정보를 보여줌
+
+                     단어바꾸기
+                     cw : change word : 단어의 끝부분에 $가 표시되면서 해당 단어를 다른 단어로 바꿀 수 있다.
+
+                     표시
+                     :se nu : set number : 라인 번호를 표시한다.
+                            :10, 14d :(startline, lastline d) : 10 라인부터 14라인까지 삭제
+                                      :(.,$d)
+                     :se nonu : no number : 라인번호 지우기
+
+
+                   검색
+                     /찾을단어   n : next
+
+                     가장최근에 실행한 편집명령 실행 : .
+
+                   전체 문서에서 단어 변경하기
+                     :g/찾을단어/s/바꿀단어/g/ : go /바꿀단어/: substitute /바꿀단어 /global/ :
+
+
+                  $ cp test.xml test2.xml:
+                    2에 있는 단어를 골라다가 1에다 요소요소 복사붙여넣기
+                    이건 버퍼를 활용해서 파일을 넘나들 수 있는데
+                        버퍼지정하기 : "A
+                        vi를 나가면 버퍼가 사라짐
+                        :e test.xml : edit test.xml
+
+
+                     탭을 누르면 8칸씩 간다.
+
+                     자동인덴트 (vi설정을 통해 해결가능 )
+                     홈디렉터리에 .vimrc 생성해준다.
+                     set cindent : c언어 스타일로 인덴트를 준다.
+                     set shiftwidth : 자동인덴트칸수 지정
+                     set expandtab : 탭을 스페이스4개로 바꾼다.
+
+
+                     vi editor 테마 설정하기
+                     $ cd /usr/share/vim
+                     $ cd vim81 . ....근데 컬러 테마가 없어서 포기....
+
+
+                     윈도에서 vi로 붙여넣기
+                     윈도 파워셀에서는 crtl + v 하면 붙여넣기가 되지만
+                     :se paste : set paste
+                     이렇게 해주면 붙일때 인덴테이션이 사라지는걸 방지한다.
+                     :se no paste : paste 모드 끄기
+
+
+
+                     이는 터미널 마다 키가 다르다.
+
+             %(#%)주의 사항 vi로 작업중에 습관적으로 crtl + z를 누르면 현재 작업하고 있는 것을 백그라운드로 돌리게 된다.
+             $ jobs 입력하면 현재 작업중인게 표시된다.
+
+             이게 나가지고 해당 위치에서
+             $ fg를 누르면 다시 foreground로 돌린다.
+             근데 이걸 또 다시 열려고하면 에러가 나는데
+
+             만약 여러개가 background에 있다면
+             $ fg %1 과 같이 숫자를 통해서 원하는 번호의 백그라운드의 작업을 foreground로 불러온다.
+
+             근데 만약에 crtl + z 을 너무 많이 반복해서 많은 경우
+             $ ps -ef | grep vi를 입력해보면 vi로 실행중인 프로세스들이 뜬다.
+             앞에 숫자는 프로세스를 띄운 놈의 숫자 즉, vi editor , 뒤의 숫자는 그 프로세스를 띄운놈을 띄운놈의 숫자, 즉 배쉬셀의 프로세스 번호이다.
+
+             $ kill -9 2440(프로세스 띄운놈의 숫자) 이렇게 하면 해당 프로세스를 죽인다.
+
+             swp 파일은
+             $ rm .swp와 같은 명령어로 제거 가능하다.
+
+
+11. 필수 명령어 사용방법
+        특정 파일안에서 특정 키워드를 찾기
+        -grep
+          grep replication test.xml
+        -cat
+          cat은 보통 | (파이프와 함께 쓴다.)
+          cat test.xml | grep replication : 특정파일을 찾으면서 그 안의 내용을 잡아보여줌
+
+          cat /etc/passwd | grep userlim 과 같이 긴파일에서 특정 키워드를 찾을 떄 쓴다.
+              해당 파일을 보면 bash라고 맨끝에 나와있는것을 알수 있는데 이게 기본 쉘을 알려주는 부분이다.
+              bash는 born again shell의 약자이다.
+
+
+
+        -ls
+          ls -l test* 이렇게 써주면 파일을 찾는다.
+          보통은
+
+
+12. 링크
+
+        하드링크 : 기존의 Inode block을 가리키게 한다.
+        파일을 rm으로 지우면 해당 파일이 지칭하는 inode를 삭제한다는것인데 결국 inode를 삭제하면 디스크에 위치한 데이터를 쓸수 없게 되므로
+        다른 데이터를 그 위해 덮어쓰는게 가능해지는것이다. 이게 삭제가 되는 과정인데
+        만약 하드링크가 되어있는 경우에 rm으로 삭제를 하면 이 원본파일을 삭제하지만 하드링크 파일이 남아있으므로 inode에 접근이 가능한것이다,
+
+        소프트링크: 원본파일을 삭제하고 이 inode가 디스크 상의 원본파일을 가리켜야 하나 이미 rm을 통해 삭제한 경우
+                  inode가 사라졌기 때문에 원본 파일에 접근이 불가능하다.
+                  소프트링크는 해당 원본파일을 가리키는 포인터를 가리키는 링크이다.
+                  보통은 편리한 접근을 위한다면  하드링크보다는 이 소프트링크를 많이 쓴다.
+
+
+                  소프트링크 만들기
+                  $ ln -s work/source/test3.xml test
+
+                  원본파일 삭제해보기
+                  $ rm work/source/test3.xml
+
+                  ----------> 이제 소프트링크로 접근하면 접근이 안되는것을 확인할 수 있다.
+                  만약 이렇게 깨진 링크가 가리키는 원본파일 위치에 다시 파일을 가져다 놓으면 링크가 다시 복구된다.
+
+
+13.터미널의 프롬프트 길이를 좀 줄여보자!
+          $ (홈위치) vi .bashrc
+                  PS1이란놈이 중요함 환경변수임
+                  여기서 PS1이란 놈을 재정의 해볼것임
+
+                      \t 현재 시간을 HH:MM:SS 형식으로 보여준다.
+                      \d 날자를 "요일 월 일" 형식으로 보여준다. Tue Jan 23
+                      \s 쉘의 이름을 보여준다.
+                      \w 현재 작업디렉토리를 완전경로로 보여준다.
+                      \W 현재 작업디렉토리의 이름을 보여준다.
+                      \u 현재 사용자의 사용자명
+                      \h 호스트만
+                      \H 호스트이름전체
+                      \# 현재 명령의 명령 번호
+                      \$ root이면 #, 일반사용자이면 $
+
+                  맨 하단에
+                  PS1="[\u@\W]"를 추가해주면 프롬프트가 저런식으로 줄어든다.
+                  만약 되돌리고 싶으면 저 줄을 지우면 된다.
+                  또한, .bashrc파일 수정후에는...
+                  $ source .bashrc 로 입력내용을 적용해준다.
+
+
+14.tar  : tape-archive (tar로 묶어주면 관리상 묶여있으므로 하나의 파일로 간주된다. )
+         (~) $ tar cvf work.tar work :   (묶을때는 무조건 cvf임, 확장자 .tar는 알아보기 쉽게 하기위해 관례상 붙이는것임)
+         (~) $ rm -R work
+         (~) $ tar xvf work.tar
+
+         -묶어서 압축하기 (압축까지 하면 용량이 줄어든다.)
+         (~) $ tar zcvf work.tar.gz work  (.gz 확장자 역시 관례상 붙이는 것으로 굳이 안붙여도 된다. 단, 그럼 알아보기가 힘들다)
+         (~) $ tar zxvf work.tar
+
+              아무튼 기본적으로 리눅스나 유닉스는 확장자라는 개념이 없어서 그냥 파일명만 있으면 끝이다, 다만 관례상
+              사용자의 편의를 위해 . 점을 찍고 확장자같은 단어들을 써주는 것이다.
