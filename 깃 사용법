@@ -1,0 +1,71 @@
+1. git bash 실행 후
+프로젝트 폴더 위치로 이동
+
+
+2.git init 명령어로 비어있는 레포지토리 생성하기
+
+
+3.git add . 해당 위치에 있는 모든 파일을 등록한다.
+
+
+4.git commit 이 파일을 저장한다.
+----> 커밋 이름 지정해주기 vim파일 최상단에 써주면된다.
+
+
+5.git remote add origin https://github.com/mook1995/metro-covid.git
+---위와 같은 형식으로 주소를 등록해준다.
+
+
+6.git push -u origin master
+----이로써 해당 주소로 업로드 하게 된다.
+
+
+7.추후 업데이트 시에는 우선 git add .실행후
+  git commit으로 파일을 저장한후에
+  git pull 명령어로 기존의 저장소에 업로드된ㄷ것과 합쳐준 이후에
+  6.git push -u origin master을 실행한다.
+
+
+링크  : https://blog.naver.com/nicholasdw/222292030705
+
+http://rogerdudler.github.io/git-guide/index.ko.html
+
+
+
+8. 에러발생시 https://blog.jaeyoon.io/2018/01/git-crlf.html
+warning: CRLF will be replaced by LF in some/file.file.
+The file will have its original line endings in your working directory.
+이는 맥 또는 리눅스를 쓰는 개발자와 윈도우 쓰는 개발자가 Git으로 협업할 때 발생하는 Whitespace 에러다.
+유닉스 시스템에서는 한 줄의 끝이 LF(Line Feed)로 이루어지는 반면, 윈도우에서는 줄 하나가 CR(Carriage Return)와
+LF(Line Feed), 즉 CRLF로 이루어지기 때문이다. 따라서 어느 한 쪽을 선택할지 Git에게 혼란이 온 것이다.
+
+------------------------->해결방법: 해답은 core.autocrlf 를 켜는 것!
+이 기능은 개발자가 git에 코드를 추가했을 때 (예컨대 커밋할 때)에는 CRLF를 LF로 변환해주고,
+git의 코드를 개발자가 조회할 때 (예컨대 clone한다거나 할 때)에는 LF를 CRLF로 변환해준다.
+그러므로 윈도우 사용자의 경우 이러한 변환이 항상 실행되도록 다음과 같은 명령어를 입력한다.
+물론 시스템 전체가 아닌 해당 프로젝트에만 적용하고 싶다면 —global 을 빼주면 된다.
+git config --global core.autocrlf true
+
+리눅스나 맥을 사용하고 있는 경우, 조회할 때 LF를 CRLF를 변환하는 것은 원하지 않을 것이다.
+따라서 뒤에 input이라는 명령어를 추가해줌으로써 단방향으로만 변환이 이루어지도록 설정한다.
+git config --global core.autocrlf true input
+
+혹은 이러한 변환 기능을 원하지 않고, 그냥 에러 메시지 끄고 알아서 작업하고 싶은 경우에는 아래 명령어로
+경고메시지 기능인 core.safecrlf를 꺼주면 된다.
+git config --global core.safecrlf false
+
+
+
+9..gitignore
+https://blog.naver.com/washble2/222399381300
+      -.1. 디렉토리 최상단(.git폴더위치한 위치에 ).gitignore 파일 생성 후 수정
+      -.2. git rm -r --cached .
+      -.3. git add .
+      -.4. git commit -m "commit메세지 "
+      -.5. git push origin [브랜치명]
+
+
+
+
+10.git clone 복사한주소 .
+         : . 을 찍어줘야 하위디렉터리를 생성하지 않고 바로 그 디렉터리에 내용을 clone을 한다.
