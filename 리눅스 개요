@@ -223,7 +223,8 @@
                      자동인덴트 (vi설정을 통해 해결가능 )
                      홈디렉터리에 .vimrc 생성해준다.
                      set cindent : c언어 스타일로 인덴트를 준다.
-                     set shiftwidth : 자동인덴트칸수 지정
+                     set shiftwidth=4 : 자동인덴트칸수 지정
+                     set tabstop=4
                      set expandtab : 탭을 스페이스4개로 바꾼다.
 
 

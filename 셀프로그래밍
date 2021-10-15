@@ -16,6 +16,7 @@
 
       - $ : 변수를 의미한다.
 
+
 3. 예제
      -연습경로 : source/script
 
@@ -79,11 +80,6 @@
              fi      // if문의 끝 : if-fi
 
 
-
-
-
-
-
 4.vim 설치하기
           $ sudo apt install vim
 
@@ -92,3 +88,263 @@
             $ cd vim81
                 여기에 보면  colors파일을 볼수 있다.
                 다시 홈디렉터리로 가서 .. .vimrc 파일을 수정한다
+
+
+5.make
+        유닉스가 탄생했을 때 만들어진 빌드 풀
+        cmd의 IDE같은 것임
+        만약 리눅스 환경에서 어플리케이션을 개발해 쓴다고 할때 이것이 반드시 쓰이게 된다.
+
+        -정수 두개를 덧셈하는 함수만들기
+        -int_add.c
+
+          int int_add(int a, int b)
+          {
+            return a + b;
+          }
+
+
+        -main 함수 만들기
+        -cal_main.c
+
+          #include <stdio.h>
+          extern int int_add(int,int);
+          int main(void)
+          {
+                  int num1 = 10, num2 = 30;
+
+                  printf("num1 + num2 = %d\n", int_add(num1, num2));
+
+                  return 0;
+
+          }
+
+          ----> gcc로 컴파일해야 한다.
+          $ gcc -c int_add.c
+          $ gcc -c cal_main.c
+          ----------> cal_main.c  cal_main.o  int_add.c  int_add.o
+                    오브젝트 ㅍ파일 생성성됨
+
+          $ gcc -o cal_main int_add.o cal_main.o
+          ---------> 두 오브젝트 파일을 묶어 실행파일로 만듬
+          ---------> 지정해준 이름으로 실행파일이 생성된다,.
+
+
+          ==============
+          정리하자면 위와 같은 작업들을 반복해서 많이 할때 이를 편리하게 자동화 해주는것이 make 유틸리티의 기능이다.
+
+        -make를 사용하기 위해
+          먼저 설정파일을 만들어서 빌드정보를 넣어줘야 하는데
+          두 종류가 있다. makefile 과 Makefile이 있는데 둘 중 어느 하나만 있으면 되므로 선택하면 되는것인데
+          이 make설정파일은 소스 안에 포함이되는데 두가지간의 차이는 없지만
+          Makefile 같이 대문자로 된경우에 알아보기 쉬우므로 강사는 후자를 선호함
+
+            $ vi Makefile
+
+            cal_main:       int_add.o cal_main.o     // 콜론 앞에있는걸 타겟(만들어낼 파일) 콜론 뒤에 있는 걸 소스라 함
+                  gcc -o cal_main int_add.o cal_main.o //앞에서 반드시 탭을 써줘야 한다.// 여기는 소스로 타겟을 만드는데
+                                                                                         어떻게 만들까 하는부분임
+
+            int_add.o:      int_add.c
+                  gcc -c int_add.c
+
+            cal_main.o:     cal_main.c
+                  gcc -c cal_main.c
+
+        $ rm *.o
+        $ rm cal_main
+
+      -Makefile을 만들어보자
+        cal_main:     int_add.o cal_main.o
+          gcc -o cal_main int_add.o cal_main.o
+
+        int_add.o:      int_add.c
+          gcc -c int_add.c
+
+        cal_main.o:     cal_main.c
+          gcc -c cal_main.c
+
+        clean:  //초기화를 위해 o파일을 지우는 기능을 추가해줌
+          rm cal_main cal_main.o int_add.o
+
+        all:    cal_main    // 최종적으로 모든 명령어를 실행해서 cal_main을 만드는 명령
+
+      $ touch *.c  수정날짜를 현재시간으로 바꾼다.
+
+      -GNU make만의 유용한 기능들
+        $@ 현재 단계에서의 타겟을 의미한다.
+        cal_main: int_add.o cal_main.o
+            gcc -o $@ int_add.o cal_main.o // 타겟을 $@로 대체 할수 있다.
+
+        int_add.o:  int_add.c
+            gcc -c $<     // 소스의 날짜가 타깃보다 최신일때 소스를 사용해서 쓴다는 의미
+
+        cal_main.o: cal_main.c
+            gcc -c cal_main.c
+
+        clean:
+            rm cal_main cal_main.o int_add.o
+
+        all:    cal_main
+
+
+
+
+     - 반복을 피하는 유용한 명령어
+        cal_main:   int_add.o cal_main.o
+            gcc -o $@ int_add.o cal_main.o
+
+        %.o:    %.c         //같은 이름의 파일은 같은이름으로 컴파일한다.는 식을 써주는것임 (반복할 필요가 없어진다.)
+            gcc -c $<
+
+        clean:
+            rm cal_main cal_main.o int_add.o
+
+        all:    cal_main
+
+
+
+      - set -o vi를 통해 자기가 떄린 커맨드 history를 vi를 통해 따라갈 수 있다.
+          $ vi ~/.bashrc
+              맨 하단에 ..
+              set -o vi 추가해줌
+              <처음 들어와서 쉬프트 + g 하면 맨밑줄로 감, 추가로... 콜론 + 줄번호는 해당 줄로감>
+          $ source ~/.bashrc 하면 수정사항이 적용됨 (. ~/.bashrc라 써도 된다.)
+
+
+          사용법: 프롬프트에서 이스케이프 한번 누르고 슬래시 / 누르고 vi M (vi M으로 시작하는 파일을 찾겠다는것임  )
+
+
+
+
+      - 수정시 편의 를 위해 변수를 선언하고 변수를 사용해주기
+
+          OBJS=int_add.o cal_main.o  //여러 파일들을 변수로 선언해줬으므로 나중에 새로운 파일이 추가되면 변수에 추가해주면 된다....
+
+          cal_main:   $(OBJS)   // 이하의 코드들 마다 변수로 적용되어 편리하게 사용이 가능하다.
+          gcc -o $@ $(OBJS)
+
+          %.o:    %.c
+          gcc -c $<
+
+          clean:
+          rm cal_main $(OBJS)
+
+          all:    cal_main
+
+
+
+      - 또 다시 변수로 만들어 깔끔하게 편리하게 만들자
+
+          OBJS=int_add.o cal_main.o
+          TARGET=cal_main
+
+          $(TARGET):  $(OBJS)
+          gcc -o $@ $(OBJS)
+
+          %.o:    %.c
+          gcc -c $<
+
+          clean:
+          rm $(TARGET) $(OBJS)
+
+          all:    $(TARGET)
+
+
+      - 옵션도 변수처리해주자 (디버깅시의 편의를 위해 나중에 새로운 컴파일러, 옵션을 쓸경우 변수만 수정해주면 된다.)
+
+          OBJS=int_add.o cal_main.o
+          TARGET=cal_main
+          OFLAGS=-o
+          CFLAGS=-c
+          CC=gcc
+
+          $(TARGET):  $(OBJS)
+              $(CC) $(OFLAGS) $@ $(OBJS)
+
+          %.o:    %.c
+              $(CC) $(CFLAGS) $<
+
+          clean:
+              rm $(TARGET) $(OBJS)
+
+          all:    $(TARGET)
+
+
+6.AWK : 유닉스에서 처음 개발된 일반 스크립트 언어 : 되게 유명한 유틸리티라고 함, 옛날의 커맨드라인 환경에서 많이 썻지만
+        지금도 유용하다.
+
+        - 실습용파일 만들기 (/home/userlim/source/script)
+         $ vi awkfile
+
+         $ awk '{print $0}' awkfile   : $0가 라인 전체를 의미함, awkfile에서 라인전체를 출력하라는 의미가 된다.
+
+         $ awk '{print $1}' awkfile   : 첫번째 컬럼
+
+         $ awk '{print $2}' awkfile   : 두번째 컬럼
+
+         $ awk '/Moss/' awkfile   :Moss가 포함된 라인을 걸러서 보여준다.
+
+         $ awk '/at/{print "\tGood Morning, " $1, $2}' awkfile  : 텍스트에서 원하는 내용을 조작해서 출력하는 방법
+                                                                  /at/ : at가 들어있는 놈을 뽑아서
+                                                                  Good Morningdmf cnrkgotj 컬럼1, 2 출력하라
+
+         $ awk '{printf "The name is %-20s Height is %4d\n", $1" "$2, $3}' awkfile
+                                                                    :출력 포맷을 지정한다. (printf)
+                                                                    %-20s는 좌측정렬 20문자 , 컬럼 1과 2(묶음), 3 을 출력함
+
+         $ awk '{print NR, $0}' awkfile : NR은 라인번호인데 라인번호 찍고 전체컬럼을 출력하면서 인덱스 번호를 찍어준다.
+
+
+        -가장 효과적인 AWK사용 방법 : 파일 찾기에 활용이 좋다.
+         $ cd /etc
+         $ ls -l | awk '$6 == "2월"'  :   awk로 원하는 파일 목록 출력
+         $ ls -l | awk '$5 < 100'       :  100바이트 미만 파일 목록
+         $ ls -l | awk '/^[d]/{print $0}'    : 정규식에서 대괄호 안에 들어가면 not이지만 밖에 들어가면 첫번쨰라는 의미가 된다.
+                                                 d로 시작하는 놈을 뽑아서 전체 컬럼을 출력한다는 의미가 된다.
+
+         $ ls -l | awk '/^[^d]/{print $0}'    : 시작이 d가 아닌놈만 출력
+         $ ls -l | awk '/^[l]/ {print $0}'    : 링크 파일만 출력함
+         $ ls -l | awk '/^[-]/ {print $0}'    : 일반 파일만 출력한다.
+
+
+         $ ls -l | wc -l   : wordcount라는 유틸리티를 활용함, 단, 숫자가 ls -l 보다 1이 크다.
+
+        -출력 결과에 연산 적용하기
+         $ ls -l | awk 'BEGIN{print"<sum of files>"}{sum+=$5}END{print sum}'
+                : BEGIN은 최초 한번만 해라는 의미, sum이라는 함수에 5번쨰 컬럼을 누적합을 구하고
+                    END : 마지막에 sum을 출력하라
+
+         $ ls -l | awk 'BEGIN{print"<mean of files>"}{sum+=$5}END{print sum/NR}'
+                :평균을 구한다.
+
+
+         $ vi 에 'BEGIN{print"<mean of files>"}{sum+=$5}END{print sum/NR}'이 명령을 넣어주는데
+              vi에는 싱글쿼테이션 대신에 줄바꿈으로 써줘도 되고 대문자 J로 한줄에 구분된 명령어로 바꿔줄수 있다.
+
+         $ ls -l | awk -f awk-script  :복잡한 스크립트는 파일로 만들고 파일을 불러와서 쓰면된다.
+
+
+
+
+
+7.그외 유용한 명령어
+        -Wordcount 유틸리티
+         $ ls -l | awk '/^[-]/ {print $0}' | wc -l  : 이와같이 활용도 가능함
+
+        -ls 명령어 옵션
+         $ ls -lt  : 시간순 출력
+         $ ls -lrt   :  시간순 역으로 출력
+
+        -Man 명령어
+         $ man ls     : 명령어에 대한 메뉴얼 출력
+
+
+        -vi명령어
+          대문자를 쓰거나 소문자를 쓸때 바꿔서 잘못쓴경우에 ~ 을 사용하면 토글하듯이 대소문자가 바뀐다.
+
+
+
+8.그외
+        환경변수를 이용해서 실행파일 찾는법
+        $ which python3      : PATH 환경변수에 걸려있는 실행파일을 which를 통해 찾을수 있는데, 여기서는 python실행파일을 찾은것임
