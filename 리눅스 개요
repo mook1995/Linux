@@ -146,7 +146,8 @@
       $ sudo reboot
 
 
-10.VI 에디터 연습하기
+10.VI 에디터 연습하기 :https://blog.pages.kr/636
+                  :https://ourcstory.tistory.com/m/136
       연습할 디렉토리 생성
              $ mkdir work
              $ cd work
@@ -188,7 +189,7 @@
                      w : 단어 단위로 이동
                      b : 단어 단위로 뒤로
                      shift + g : 문서의 맨 뒤로 이동
-                     gg: 문서의 맨 끝으로 이동 
+                     gg: 문서의 맨 끝으로 이동
                      crtl+f : 한페이지 앞으로 이동
                      crtl+b : 한페이지 뒤로 이동
                      crtl+g  : 현재 위치에 대한 각종 정보를 보여줌
@@ -205,11 +206,12 @@
 
                    검색
                      /찾을단어   n : next
+                                N : previous
 
                      가장최근에 실행한 편집명령 실행 : .
 
                    전체 문서에서 단어 변경하기
-                     :g/찾을단어/s/바꿀단어/g/ : go /바꿀단어/: substitute /바꿀단어 /global/ :
+                     :%s/찾을단어/바꿀단어/g : %(전체문서)substitute/이전단어/바꿀단어/get :
 
 
                   $ cp test.xml test2.xml:
