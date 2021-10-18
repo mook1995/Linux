@@ -73,12 +73,20 @@
 
 
      -bash셀에서 배열 사용하기
+           #!/bin/bash
             -if["$#" -lt 1]  : 전체인자가 lesser than 1 이면
-             then
-                    echo
-             exit 1   // if탈출
-             fi      // if문의 끝 : if-fi
+            then
+                    echo "$# is illegal number of parameters."
+                    echo "Usage: $0 [options]"
+                    exit 1
 
+            fi
+            
+            ARGS=("$@")
+            for((c=0;c<$#;c++))
+            do
+                    echo "$c th parameter = ${ARGS[$c]}"
+            done
 
 4.vim 설치하기
           $ sudo apt install vim

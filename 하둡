@@ -1,0 +1,362 @@
+1.HDFS :  테라바이트 이상의 대규모 데이터를 처리하기 위한 file system.
+
+          스트리밍 방식으로 데이터에 접근하도록 설계됨
+          클라이언트는 끊김없이 연속적인 흐름으로 데이터에 접근이 가능해짐 (ex 유튜브 영상 스트리밍)
+
+          최소저장 단위는 블럭이다. default 128이다.
+          단, 이는 가변적이며 저장되는 데이터 사이즈에 맞게 블럭이 생성된다.
+
+          네임노드, 세컨더리 노드, 데이터 노드로 이루어져있는데 하나의 데이터 노드가 수백대의 노드로 이루어짐
+
+
++. 우분투에서 클립보드 사용 ----> 가상머신설정 -> 일반 -> 고급 -> 클립보드 공유 : 양방향  으로 설정하면 가능
+
+
+2.프로토콜버퍼 설치 :  네임노드 데이터노드는 별도의 하드웨어임
+                      이들끼리 통신할때는 구글의 프로토콜 버퍼를 이용해 통신함
+                      이미 검증된 놈을 이용해 통신을 하겠다는것임
+                      이 프로토콜 버퍼는 오픈되어있다.
+                      아무튼 하둡이 동작하려면 프로토콜 버퍼가 설치되어있어야 함
+                      하둡 2.0 -> 프로토콜버퍼 v2.5
+                          :https://github.com/protocolbuffers/protobuf/releases/tag/v2.5.0
+                          -------------> protobuf-2.5.0.tar.gz  <2.29MB>
+
+                      사용자 홈위치로 이동
+                      - (/mnt/share) $ mv protobuf-2.5.0.tar.gz ~/
+                      - 다른방법 (~) $ mv /mnt/share/protobuf-2.5.0.tar.gz .
+
+                      +사실 공용으로 쓸것이므로 홈위치는 부적절해보이니 /usr/local/위치로 다시 이동시키자...
+                      $ sudo mv protobuf-2.5.0.tar.gz /usr/local/
+                      $ cd /usr/local/
+
+                      압축풀기
+                      $ sudo tar zxvf protobuf-2.5.0.tar.gz
+
+                      설정 실행
+                      $ sudo ./configure
+
+                      실행 확인
+                      $ ls -lrt
+                      ------> Makefile 이 생성된것을 알수 있다. 이는 해당환경 스크립트에 맞게 실행하기 위한 Makefile이다.
+
+                      빌드
+                      $ sudo make
+                      <gcc, g++ 유틸리티가 설치되어있어야 함>
+                      <시간이 오래걸리는데 중간에 warning뜨는 것들은 신경안써도 되는 부분....>
+
+                      설치
+                      $ sudo make install
+
+                      $ protoc --version
+                      --------------> 에러발생시 ...
+                                    $ sudo ldconfig
+                                    -----------------> 버전 출력 : 설치완료..
+
+
+3.하둡 설치          :  standalone 모드 : 테스트용
+                    :  Pseudo-distribute 모드 : 기계 한대로 모든 하둡 환경설정 : 한대의 컴퓨터에 모든 노드를 다 설치하겠다는것임
+                                                공부용이다.
+                    : fully distributed 모드 : 실제 서비스용으로 구동에 어려움이 많다.
+
+                    hadoop다운로드 : 3.2.대 버전 다운 (3.3은 강사님이 테스트를 안해봄) :https://hadoop.apache.org/releases.html
+                                  빌드된놈을 받을수 있고 소스버전을 다운받을수 있는데 복잡하니 빌드된놈을 받읍시다.
+                                  ------------> binary 버튼 클릭 !
+                                  https://dlcdn.apache.org/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz ---> 링크주소복사 !
+                                      $ cd
+                                      $ wget https://dlcdn.apache.org/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz
+
+                                      이렇게 wget을 이용하면 속도가 굉장히 빠르다는 장점이 있다.
+
+                    압축풀기
+                    $ tar zxvf hadoop....
+
+                    jdk설치하기
+                    오라클에서 정식배포한 jdk, 또는 openJDK, 아마존배포판 다 사용가능
+                    jdk 1.8이상이면 다 하둡 호환 가능이다.
+                    우리는 open JDK 1.8을 설치할겁니다.
+                    $ sudo apt install openjdk-8-jdk
+
+                    자바 홈 환경변수 설정
+                    $ which java
+
+                    userlim@userlim-VirtualBox:~$ which java
+                    /usr/bin/java
+                    userlim@userlim-VirtualBox:~$ cd /usr/bin/java
+                    -bash: cd: /usr/bin/java: 디렉터리가 아닙니다
+                    userlim@userlim-VirtualBox:~$ cd /usr/bin/
+                    userlim@userlim-VirtualBox:/usr/bin$ ls -l java
+                    lrwxrwxrwx 1 root root 22 10월 18 11:34 java -> /etc/alternatives/java
+                    .
+                    .
+                    .
+                    ..
+                    .
+                    ....
+                    소프트링크를 따라가다
+
+                    $ cd
+                    $ vi .bashrc
+
+                        export JAVA_HOME=
+                              <환경변수 설정할때 export를 하는 이유는 내 쉘에서 다른 프로세스를 기동할 떄 내 프로세스 내에서
+                                자식 프로세스를 생성하는데 그 자식프로세스에 내 환경변수를 넘겨주고 싶다 하는것임 >
+
+                                export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+                                export PATH=$PATH:$JAVA_HOME/bin
+                                export CLASS_PATH=.:$JAVA_HOME/lib/tools.jar
+
+                    $ source. bashrc
+
+                    네임노드, 데이터 노드끼리 통신하는데 비밀번호를 물어보면 통신이 안되므로 ssh 키값으로
+                    서로 비밀번호없이  인증을 하도록 해준다.
+
+                    $ ssh-keygen -t rsa
+                          ------------> 죄다 엔터쳐줌
+                    $ ls -al
+                            ------------> .ssh 파일 생성 확인
+                                          id_rsa <개인키>
+                                          id_rsa.pub <공용키>
+                                          나한테 접속할 놈들한테 공용키를 주면
+                                          그놈들이 접속할 때 비밀번호를 안물어봐도 된다.
+                                          이 퍼블릭키를 가지고 있는놈이 나한테 들어오고 그놈들을 통과시켜줘야 하는데
+                                          이 퍼블릭키를 authorized_key라는 디렉토리에 등록해두고 요청이 들어오면 비교해야 한다.
+                                          이 디렉토리를 직접만들고 키를 복사붙여넣기 해도되지만 아래와 같은 방법으로
+                                          간편하게 합시다.
+
+                                          $ cat id_rsa.pub >> authorized_keys
+                                          ( >한개: 파일 생성
+                                            >>두개: 해당파일이 없으면 만들고 있으면 뒤에 apped함
+                                            > : 이 꺽쇠는 출력변환 연산자이다. )
+
+                                          $ ssh localhost  <버추얼 머신 내에서 동일한 localhost에
+                                                            접속하므로 별도의 포트포워딩 같은 개념이 없다.>
+                                              ------------> finger print 등록: yes
+
+                                          $ exit
+
+                                          이렇게 완료해주면 하둡의 각노드끼리 접속하는 환경이 구현된것
+                                          실제로 하둡을 완전히 설치할때는 각 서버마다 이 ssh를 설정해줘야 한다.
+
+
+4.하둡 세팅
+
+              $ cd hadoop-3.2.2/etc/hadoop/
+
+              $vi hadoop-env.sh    : 우리실습환경에서는 아래의 두가지만 수정해주면 충분하다.
+
+                            /JAVA_HOME 위치
+
+                                    :JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 주석풀고 수정
+
+                            /HADOOP_PID_DIR=/tmp  <프로세스 id정보를 /tmp 밑에 저장하도록 설정된것인데 좀더 깔끔하게 할것임>
+
+                                    ------> 우선 hadoop 폴더 밑에 사용할 디렉터리를 새로만들어주자
+                                              $ mkdir ~/hadoop-3.2.2/pids
+
+                                    :export HADOOP_PID_DIR=/home/userlim/hadoop-3.2.2/pids 주석풀고 수정
+
+
+
+
+              세컨더리 네임노드 서버를 지정해줘야 함
+              $ cat /etc/hosts 파일을 보면
+              localhost라고 호스트명을 지정해준것을 확인할 수 있다.
+              이렇게 localhost를 내부아이피로 지정해놓았기 때문에 ssh 접속시에 localhost로 접속이 가능한것이다.
+              그러니까 말하자면 여기에서 내부아이피를 찾을 때 해석을 수행하다는것이다.
+
+              - 윈도우즈의 경우에는 C/windows/system32/drivers/ssh/ 밑에 hosts파일을 찾을수 있다.
+
+              $ pwd
+                      ------->/home/userlim/hadoop-3.2.2/etc/hadoop
+              $ vi masters (세컨더리 네임노드의 호스트명이 뭐냐 하는것을 적어주는 부분임)
+                      : localhost
+
+              $ vi workers (워커노드의 호스트 명......)
+                      : localhost
+
+              $ vi core-site.xml  : 하둡파일시스템에 접근할 떄 어떤 주소로 접근하냐는것을 명시해주는부분
+
+                  <configuration>
+                      <property>
+                          <name>fs.defaultFS</name>
+                          <value>hdfs://localhost:9000</value>
+                      </property>
+                  </configuration>
+
+
+                        이제 하둡 실행중에 생기는 임시파일을(실제데이터가 저장될 공간) 저장할 공간을 지정해줘야함
+                        -------------->  $ pwd : /home/userlim/data/hadoop/tmp
+                        (위치는 사실 어디든 상관없지만... 추후 관리의 편의상 밖으로 뺴주는게 좋음, 직접 생성해주자.)
+                        아래와 같이 지정해주면 실제로 네임노드에서 생성되는 임시파일들을 아래 경로의 tmp밑에 name이라는 경로 밑에
+                        데이터노드에서 생성되는 임시파일들을 tmp밑에 data 밑에 경로로 생성이된다.
+                        <configuration>
+                            <property>
+                                <name>fs.defaultFS</name>
+                                <value>hdfs://localhost:9000</value>
+                            </property>
+                            <property>
+                                <name>hadoop.tmp.dir</name>
+                                <value>/home/userlim/data/hadoop/tmp</value>
+                            </property>
+                        </configuration>
+
+              $ vi hdfs-site.xml   :   하둡은 디폴트로 동일한 데이터를 3copy를 가지는데 우리가 기계 한대로쓰고 있으니 사실 의미가 없다.
+                                        그러니 그 부분을 설정하기 위한 부분이 여기다.
+                                        아래를 지정하지 않으면 default 3copy가 생성된다.
+                                        <property>
+                                             <name>dfs.replication</name>
+                                             <value>1</value>
+                                         <property>
+
+                                         최신 fds 상의 메모리를 체크포인팅 하는 디렉터리를 지정하는 부분이다.
+                                         , 즉 세컨더리 네임노드가 체크포인팅 할때 사용하는 위치임
+                                         마찬가지로 디렉터리를 만들어주자
+                                          $ pwd : /home/userlim/data/hadoop/name-secondary
+                                          <property>
+                                              <name>dfs.namenode.checkpoint.dir</name>
+                                              <value>/home/userlim/data/hadoop/name-secondary</value>
+                                          <property>
+
+                                         이제 세컨더리 네임노드가 체크포인팅 할때 네임노드와 주거니 받거니 하는데
+                                         세컨더리 네임노드 입장에서 네임노드에 접근하기 위한 주소를 지정해준다.
+
+                                         <property>
+                                             <name>dfs.http.address</name>
+                                             <value>localhost:50070</value>
+                                         <property>
+
+                                         네임노드입장에서 세컨더리 네임노드에 접근하기 위한 주소를 지정해주자.
+                                         <property>
+                                             <name>dfs.secondary.http.address</name>
+                                             <value>localhost:50090</value>
+                                         <property>
+
+
+
+                                         네임노드에서 사용할 데이터 위치를 지정해주자
+                                         ----------> pwd /home/userlim/data/hadoop/namenode/
+                                         ----------> pwd /home/userlim/data/hadoop/datanode/
+
+                                         <property>
+                                             <name>dfs.namenode.name.dir</name>
+                                             <value>/home/userlim/data/hadoop/namenode/</value>
+                                         <property>
+                                         <property>
+                                             <name>dfs.datanode.data.dir</name>
+                                             <value>/home/userlim/data/hadoop/datanode/</value>
+                                         <property>
+
+
+                                         완성된 모양
+                                         <configuration>
+                                            <property>
+                                                <name>dfs.replication</name>
+                                                <value>1</value>
+                                            </property>
+                                            <property>
+                                                <name>dfs.namenode.checkpoint.dir</name>
+                                                <value>/home/userlim/data/hadoop/name-secondary</value>
+                                            </property>
+                                            <property>
+                                                <name>dfs.http.address</name>
+                                                <value>localhost:50070</value>
+                                            </property>
+                                            <property>
+                                                <name>dfs.secondary.http.address</name>
+                                                <value>localhost:50090</value>
+                                            </property>
+                                            <property>
+                                                <name>dfs.namenode.name.dir</name>
+                                                <value>/home/userlim/data/hadoop/namenode/</value>
+                                            </property>
+                                            <property>
+                                                <name>dfs.datanode.data.dir</name>
+                                                <value>/home/userlim/data/hadoop/datanode/</value>
+                                            </property>
+                                        </configuration>
+
+                                         +. 하둡에 대한 설명
+                                           : 기본적으로 데이터가 크면 데이터를 축소해야 다루기가 편해집니다.
+                                            이걸 map reduce라고 하는데 > MapReduce.pdf 참조
+                                            만약 인풋이 수십 테라바이트크기라고 하면 이걸 일일이 계산하기 힘들어요
+                                            그래서 mapreduce 연산을 활용하는 겁니다.
+
+                                           $ vi mapred-site.xml
+
+                                            <property>
+                                                <name>mapreduce.framework.name</name> //맵리듀스작업을 누가하느냐
+                                                <value>yarn</value>   //리소스매니저인 yarn이 할거다.
+                                            </property>
+                                            <property>
+                                                <name>yarn.app.mapreduce.am.env</name>  //yarn 설정부분
+                                                <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+                                            </property>
+                                            <property>
+                                                <name>mapreduce.map.env</name>      //mapping
+                                                <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+                                            </property>
+                                            <property>
+                                                <name>mapreduce.reduce.env</name>     //reduce
+                                                <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+                                            </property>
+
+
+                                           $vi yarn-site.xml
+
+                                           <property>
+                                               <name>yarn.nodemanager.aux-services</name>     //suffling작업을 yarn에게 시키겠다.
+                                               <value>mapreduce_shuffle</value>
+                                           </property>
+                                           <property>
+                                               <name>yarn.nodemanager.aux_services.mapreduce.shuffle.class</name>     //어떤 클래스를 사용해서 shuffle을 할거냐는 부분
+                                               <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+                                           </property>
+                                           <property>
+                                               <name>yarn.nodemanager.local-dirs</name>     //yarn의 로컬디렉토리를 만들어주자 pwd:  /home/userlim/data/hadoop/yarn/local
+                                               <value>/home/userlim/data/hadoop/yarn/local</value>
+                                           </property>
+                                           <property>
+                                               <name>yarn.resourcemanager.fs.state-store.uri</name>   //resource manager가 사용할 디렉터리를 지정해주자 : pwd: /home/userlim/data/hadoop/yarn/rmstore
+                                               <value>/home/userlim/data/hadoop/yarn/rmstore</value>
+                                           </property>
+                                           <property>
+                                               <name>yarn.resourcemanager.hostname</name>
+                                               <value>localhost</value>
+                                           </property>
+                                           <property>
+                                               <name>yarn.web-proxy.address</name>
+                                               <value>0.0.0.0:8090</value>
+                                           </property>
+                                           <property>
+                                               <name>yarn.nodemanager.log-dirs</name>       // pwd : /home/userlim/data/hadoop/yarn/logs
+                                               <value>/home/userlim/data/hadoop/yarn/logs</value>
+                                           </property>c
+
+
+
+
+
+                                    $ vi .bashrc
+                                    export HADOOP_HOME=/home/userlim/hadoop-3.2.2
+                                    export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+
+                                    $ source .bashrc
+
+
+                                    $ cd ../..
+
+                                    $ pwd : ~/hadoop-3.2.2
+                                            이제 hdfs 포맷해줘야 한다. 한번 포맷에 성공했으면 다시하면 안되니 주의해야 합니다.
+                                    $ bin/hdfs namenode -format
+
+                                    ---------------> 출력결과 맨밑에
+                                                      Storage directory /home/userlim/data/hadoop/namenode has been successfully formatted.
+                                                      출력시 성공적으로 포맷이 완료된것임
+
+
+
+
+5.하둡세팅 여담
+        이 세팅방법을 구글링 한다고 하면
+        블로그마다 세팅방법이 다 다른데 그만큼 하둡 세팅이 방대하다는거에요
+        저희가 한 방법은 그래서 최소한의 구동을 위한 세팅입니다.
