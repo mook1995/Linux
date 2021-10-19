@@ -1,0 +1,277 @@
+1. 1차관문은 통과했고
+   이제는 하둡을 데몬에 올릴겁니다.
+   이러한 과정은 $HADOOP_HOME의 sbin 폴더 밑에 sh파일을 이용하는데...
+
+  하둡 (Distributed File System)
+         $ sbin/start-dfs.sh
+
+         확인
+         $ jps : 자바로 만들어진 프로세스를 보여줌
+                여기에 네임, 데이터노드, 세컨더리 네임노드 총 3가지가 다 올라와 있어야 함
+          ------------>   2114 DataNode
+                          1987 NameNode
+                      >   2451 Jps
+                          2287 SecondaryNameNode
+
+
+   YARN 올리기 (Yet Another Resource maNager)
+         $ sbin/start-yarn.sh
+         ---> warning은 무시
+
+         $ jps
+         ------------->   2114 DataNode
+                          1987 NameNode
+                          3147 Jps
+                   new>   3051 WebAppProxyServer
+                   new>   2556 ResourceManager
+                   new>   2686 NodeManager
+                          2287 SecondaryNameNode
+
+   잡 히스토리 서버  <터미널창 새로하나 열어서... >
+         잡히스토리 서버는 백그라운드 프로세스로 올려야 하기 때문에
+         예를 하나 띄우면 터미널을 시간마다 로그를 뱉어내므로 쓸수가 없음
+         $ bin/mapred historyserver start&   (&문자는 백그라운드로 기동하라는것임)
+
+         ---------->메세지 맨 하단....
+                    2021-10-19 09:45:32,780 INFO ipc.Server: IPC Server listener on 10033: starting
+                    2021-10-19 09:45:32,783 INFO util.JvmPauseMonitor: Starting JVM pause monitor
+                    정상적으로 기동이 되었다는것이다.
+
+                   이렇게 화면이 가득찬다. 이걸 백그라운드에 살려놓으면서 창을 꺼주려면 exit을 입력한다.
+
+         $ jps
+          ----------->  3345 Jps
+                        2114 DataNode
+                        1987 NameNode
+                        3051 WebAppProxyServer
+                   >    3259 JobHistoryServer
+                        2556 ResourceManager
+                        2686 NodeManager
+                        2287 SecondaryNameNode
+
+2. 2차관문 통과 했고 파이어폭스 기동해 주소창에 ....
+          -> localhost:50070을 입력하여 이동하면 오버뷰 페이지가 나온다.
+          -> localhost:8088  -----> 구동중인 하둡 어플리케이션이 나온다.
+                                      우린 아무것도 없다.
+                       19888 -----> jobhistory가 나온다.
+       위와 같은 페이지를 윈도우에서 보고자하면 역시 포트 포워딩을 해준다.
+       그전에 우분투 방화벽에서 해당 포트를 열어주자
+       $ sudo ufw allow 50070/tcp
+       $ sudo ufw allow 19888/tcp
+       $ sudo ufw allow 8088/tcp
+
+       포트포워딩을 해주자
+       ------------> 만약  포워딩해도 위 포트가 안되면 .... 그냥 가상머신으로 보죠 ... 안되네요
+                      https://gist.github.com/addingama/f665914340ec26f7efa80e86f53622e1
+
+
+
+3. 하둡 내리기 - 종료순서
+      $ jps
+      $ kill -9 [잡히스토리]
+
+      $ sbin/stop-yarn.sh
+      $ sbin/stop-dfs.sh
+
+
+      다시 올리기
+      $ sbin/start-dfs.sh
+      $ sbin/start-yarn.sh
+
+      ---------------> $ jps 를 보면 job history 뺴고 다 올라와있어야 함
+
+       잡히스토리서버 올리기
+       물론, 창하나 더 띄어서....
+                        $ bin/mapred hisotryserver start&
+
+
+4. 예제 프로그램 실행해보기
+          $ pwd : HADOOP_HOME/share/hadoop/mapreduce/
+           여기에 보면 예제 파일들이 있다.
+
+           +.HDFS는 리눅스 파일구조와 비슷한 디렉터리구조를 가지는데
+                  맨 상단에 루트가 있다. 단, 현재는 루트만 만들어진 상태임
+                  그래서 수동으로 만들어줘야 한다.
+
+                  어떻게 만드냐면 예는 리눅스랑은 조금 다른데
+                  루트 밑에 반드시 유저라는 디렉토리가 있어야 한다.
+                  그 밑에 사용자 계정 디렉토리가 있어야 하는데
+                  이 디렉토리는 하둡을 사용하는 유저와 이름이 같아야 한다.
+                  내 경우에는 userlim이다.
+
+                  종합하면 /user/userlim 이라는 디렉토리를 만들어줘야한다.
+
+                  pwd : HADOOP_HOME
+                  $ bin/hdfs dfs -mkdir /user: dfs라고하면 하둡명령어를 쓴다고 인식한다
+                                    단 하둡명령어는 반드시 대쉬를 쓴다.
+
+                    ------
+                    userlim@userlim-VirtualBox:~/hadoop-3.2.2$ bin/hdfs dfs -mkdir /user
+                    userlim@userlim-VirtualBox:~/hadoop-3.2.2$ bin/hdfs dfs -mkdir /user/userlim
+                    --------------> 이렇게 생성된 폴더들은 하둡시스템 안에 만들어진것이다.
+                                        실제적으로 데이터는 ~/data/hadoop/datanode/current 밑에 파일형태로 존재한다.
+                                        그래서 리눅스에서는 데이터를 읽을수 없고 하둡을 통해야만 읽기가 가능하다.
+
+
+                    하둡 파일 시스템명령어 ls에 아무런 옵션을 안주면 기본적으로 /user/userlim 경로의 ls를 보여준다.
+                    근데 만약에 이러한 디렉토리를 만들어놓지 않고 그냥 ls를 하면 디렉토리가 존재하지 않는다는 에러메세지가 뜬다.
+                    그래서 최초에 이러한 디렉토리를 생성해줘야한다.
+
+        이제 워드카운트라는 샘플 프로그램을 돌려보자
+        그러므로 대상 텍스트 파일을 담을 디렉토리를 만들어보자
+
+        userlim@userlim-VirtualBox:~/data/hadoop/datanode/current$ cd $HADOOP_HOME
+        userlim@userlim-VirtualBox:~/hadoop-3.2.2$ bin/hdfs dfs -mkdir sample-input
+                                                --------------> 이렇게 써주면 디폴트로 user계정 아래 위치에 생성한다.
+
+        - bin/hdfs dfs -put : -put 리눅스파일시스템 파일을 하둡에 넣는 명령어, 첫번째 인자는 어디에있는 파일, 두번쨰 인자는 목적지
+        $ bin/hdfs dfs -put etc/hadoop/hadoop-env.sh sample-input
+
+        $ bin/hdfs dfs -ls /user/userlim/sample-input : 옮겨졌는지 확인하자
+
+        $ $ bin/yarn jar share/mapreduce/hadoop/hadoop-mapreduce-examples-3.2.2.jar wordcount sample-input sample-output
+        : jar 파일을 돌린떄는 bin의 yarn을 쓴다.
+
+        이제 실행확인
+                  파이어폭스 - http://localhost:19888/jobhistory
+                            - http://localhost:8088/cluster
+
+                            $ bin/hdfs dfs -ls sample-output
+                            ---------->
+                            -rw-r--r--   1 userlim supergroup          0 2021-10-19 11:10 sample-output/_SUCCESS
+                            -rw-r--r--   1 userlim supergroup       9916 2021-10-19 11:10 sample-output/part-r-00000
+
+                            $ bin/hdfs dfs -cat sample-output/part-r-00000
+                            ---------------> wordcount 결과 출력
+
+
+        에러 발생시....
+                pwd : ~/data/hadoop/.../logs 위치의 로그파일을 확인한다.
+                                      ls -lrt : 최근 로그파일 확인
+
+                -이후 에러 원인을 찾아서 해결해야 하는데
+                 보통 하둡 설정파일 문제인경우가 많다.
+                 하둡 설정파일을 수정하는 경우엔
+                 이를 다시 적용하기 위해
+                 하둡을 모두 내렸다가 다시 올려줘야 한다./
+
+
+
+5. 하둡 명령어
+              $ bin/hdfs dfs -ls -R : 디렉터리 하위까지 다 검색보여줌
+              $ bin/hdfs dfs -cat sample-output/part-r-00000
+
+              $ bin/hdfs dfs -text sample-output/part-r-00000
+              ------------> cat과는 조금 다른데 text의 경우 압축된 파일까지 보여줄수 있다.
+
+              $ bin/hdfs dfs -get sample-output/part-r-00000 ~/work/
+
+              $ bin/hdfs dfs -rm -r vbcbbbb  : rm -r 옵션을 통해 폴더의 하위디렉토리까지 다 삭제 가능하다.
+
+
+6. 하둡 애플리케이션 만들어보기
+              우리는 이클립스를 이용해서 만들것인데
+              이클립스에서 만들어보려면 하둡의 라이브러리 들을 물고서 작업을 해야 되요
+              근데 그 많은 라이브러리 들을 일일이 추가해줄 수 없으니 메이븐이라는 놈을 쓸겁니다.
+
+              group-id : 팀워크시 식별을 위한 아이디임 일반적으로 자기 쓰는 패키지 도메인으로 그룹아이디를 매긴다.
+              artifact id : 이게 프로젝트이름임 : WordPro
+              version : 0.1
+
+
+              +이클립스 설정 : 상단 Window 탭- preference - workspace - 인코딩-CP949-Utf-8로 변경
+
+              -WordPro 메이븐 프로젝트 생성
+
+              <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+              <groupId>userlim.group</groupId>
+              <artifactId>WordPro</artifactId>
+              <version>0.1</version>
+
+              <properties>
+              <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              <maven.compiler.source>1.8</maven.compiler.source>
+              <maven.compiler.target>1.8</maven.compiler.target>
+              </properties>
+
+              </project>
+
+              여기서 저장한다음 페이지를 우클릭하고 메이븐 항목에 들어가서 updata project해주면 된다.
+
+
+
+
+              여기서 컴파일러 버전은 1.8로 맞추는 이유는 리눅스에 설치된 jdk버전이 1.8이기 때문임
+
+              이동->
+              https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common/3.2.2
+
+              <dependencies></dependecies>
+              안에 복사붙여넣기하고 crlt + a로 전체선택
+               crlt + shift + f 하면 자동 줄맞춤
+
+               한번더 이동 ->
+               https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-mapreduce-client-core/3.2.2
+
+               이렇게 하고 저장하면 인터넷에서 메이븐 디펜던스들을 모두 끌어오면서
+               WordPro 프로젝트가 계속 업데이트 된다.
+
+               다 끌어왔으면 좌측 디렉토리 패널에서 WordPro 좌클릭한뒤 maven에서 업데이트 프로젝트 한번더 해준다.
+
+               이렇게 해서 끌어온 위치는 C:Users/본인사용자 / .m2 밑에 repository에 있다.
+               이게 로컬리포지토리인데 이래서 c드라이브에 공간이 여유가 있어야 한다.
+
+
+               이제 src/main/java에 패키지를 만들어주고 패키지 아래에 클래스를 만들어준다.
+
+              package com.abcde.mapper;
+
+              import org.apache.hadoop.io.IntWritable;
+              import org.apache.hadoop.io.LongWritable;
+              import org.apache.hadoop.io.Text;
+              import org.apache.hadoop.mapreduce.Mapper;
+
+              public class WordCountMapper extends Mapper<LongWritable, Text, Text, IntWritable>
+              //임폴트 할때는 ctrl + shift + o 해주면 자동으로 검색을 해서 추가해준다.
+              //LongWritable 은 맵퍼의 입력 키, text는 입력 벨류 다. 다음은 출력
+              {
+                .............자바 이클립스 참조
+                ............F:// 녹화영상 참조
+
+              }
+
+
+
+7.만든 WordCount 실행해보기
+
+            생성된 WordPro-0.1.jar 파일은 쉐어폴더에 옮겨놓고
+            슬랙에서 sample.txt 를 다운받는다(utf-8)
+
+            $ pwd :  $HADOOP_HOME
+            $ bin/hdfs dsf -mkdir wordcount-input
+            $ bin/hdfs dsf -put /mnt/share/sample.txt wordcount-input/
+
+            $ bin/yarn jar /mnt/share/WordPro-0.1.jar com.abcde.driver.WordCount woudcount-input wordcount-output
+                            : (자바 클래스 이름을 넣어주면 되는데 보통은 패키지 명까지 풀로 써줘야 한다.)
+                                            -----------> 실행
+
+            $ bin/hdfs dfs -ls wordcount-output
+            $ bin/hdfs dfs -cat wordcount-output/part-r-00000
+                                            ----------->출력
+
+
+
+8.이제 본격적인 실습을 위해 빅데이터 아닌 '큰'데이터 한번 다뤄봅시다.
+
+            데이터를 받아보면 5기가 정도되는 가상머신 메모리용량을 8기가 잡으신분은 1년치를 해도 상관없지만
+            4기가로 잡은 경우에는 6개월만 하세요
+
+            받은 데이터를 압축을 풀어서 1988년 1월 부터 12월까지의 1개년치 데이터를 linux_share 폴더에 옮기고
+            아톰 에디터를 이용해 각 파일에 있는 헤더를 모두 떼어버렸다.
+
+
+            $ bin/hdfs dfs -put /mnt/share/air-data/*.csv air-input  // 쉐어폴더의 파일을 하둡시스템안으로 옮겨준다.
+            $ bin/hdfs dfs -ls air-input/
+
+            $ bin/hdfs dfs -put /mnt/share/air-data/*.txt air-input // 혹시모르니 .txt로 한번더 반복해준다.
