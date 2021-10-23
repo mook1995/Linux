@@ -1,0 +1,17 @@
+1.이클립스 ㅣ getters만들기
+          -select getters : 자바 소스페이지에서 우클릭 - Source항 - Generate getters and setter항목 - select getters선택....
+            ---------------> 생성자에 맞는 getters를 자동으로 만들어준다.
+
+           main() 만들기
+
+           main 입력 + crtl + space 하면 자동으로 제시해줌
+
+
+           -하둡 커맨드에서 옵션으로 출발 도착 지역 구하는 코드 작성
+
+           -DelayCountMapper -
+           protected void setup(Mapper<LongWritable, Text, Text, IntWritable>.Context context)
+             throws IOException, InterruptedException {
+           // TODO Auto-generated method stub
+           workType = context.getConfiguration().get("workType");
+           ///configuration에 설정해준 Job을 그대로 긁어온다
